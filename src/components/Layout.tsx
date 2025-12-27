@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import TerminalController from './TerminalController';
 
 const OuterContainer = styled.div`
   display: flex;
@@ -99,6 +100,7 @@ const Layout = () => {
       <MainContent>
         <Outlet />
       </MainContent>
+      <TerminalController />
     </OuterContainer>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 const BOOT_TEXT = [
   "LOAD \"\"",
@@ -13,6 +13,20 @@ const BOOT_TEXT = [
   "SYSTEM BOOT SEQUENCE COMPLETE.",
   "ENTERING GRAPHICAL USER INTERFACE..."
 ];
+
+// Intense VHS Glitch Keyframes
+const skewAnim = keyframes`
+  0% { transform: skewX(0deg); text-shadow: -2px 0 red, 2px 0 blue; }
+  5% { transform: skewX(10deg); text-shadow: -4px 0 red, 4px 0 blue; }
+  10% { transform: skewX(-10deg); text-shadow: -6px 0 red, 6px 0 blue; }
+  15% { transform: skewX(5deg); text-shadow: -3px 0 red, 3px 0 blue; }
+  20% { transform: skewX(0deg); text-shadow: -2px 0 red, 2px 0 blue; }
+  45% { transform: skewX(0deg); text-shadow: -2px 0 red, 2px 0 blue; }
+  50% { transform: skewX(-20deg); text-shadow: -10px 0 red, 10px 0 blue; color: #fff; } /* Flash */
+  55% { transform: skewX(10deg); text-shadow: -5px 0 red, 5px 0 blue; }
+  60% { transform: skewX(0deg); text-shadow: -2px 0 red, 2px 0 blue; }
+  100% { transform: skewX(0deg); text-shadow: -2px 0 red, 2px 0 blue; }
+`;
 
 const Container = styled.div`
     background-color: black;
@@ -36,6 +50,15 @@ const Prompt = styled.div`
     flex-direction: column;
 `;
 
+const GlitchText = styled.div`
+  animation: ${skewAnim} 2s infinite;
+  display: inline-block;
+  color: red;
+  font-size: 3rem; /* Larger text */
+  font-weight: bold;
+  letter-spacing: 5px;
+`;
+
 const Blink = styled.span`
     animation: blink 1s step-end infinite;
     @keyframes blink {
@@ -51,16 +74,14 @@ const randomChar = () => {
 
 const DecodingLine = ({ text, onComplete }: { text: string, onComplete: () => void }) => {
   const [display, setDisplay] = useState('');
-  const [isResolved, setIsResolved] = useState(false);
 
   useEffect(() => {
     let iterations = 0;
-    const maxIterations = 20; // How long to scramble
+    const maxIterations = 15;
 
     const interval = setInterval(() => {
       if (iterations >= maxIterations) {
         setDisplay(text);
-        setIsResolved(true);
         clearInterval(interval);
         onComplete();
         return;
@@ -73,7 +94,7 @@ const DecodingLine = ({ text, onComplete }: { text: string, onComplete: () => vo
       }).join(''));
 
       iterations++;
-    }, 30); // Speed of scramble
+    }, 30);
 
     return () => clearInterval(interval);
   }, [text]);
@@ -87,33 +108,38 @@ const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const playBeep = () => {
-    if (!audioCtxRef.current) return;
-    try {
-      const osc = audioCtxRef.current.createOscillator();
-      const gain = audioCtxRef.current.createGain();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(800, audioCtxRef.current.currentTime);
-      gain.gain.setValueAtTime(0.05, audioCtxRef.current.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtxRef.current.currentTime + 0.1);
-      osc.connect(gain);
-      gain.connect(audioCtxRef.current.destination);
-      osc.start();
-      osc.stop(audioCtxRef.current.currentTime + 0.1);
-    } catch (e) {
-      console.warn("Audio play failed", e);
+  const initAudio = () => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+    if (audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume();
+    }
+  };
+
+  const playBeep = () => {
+    initAudio();
+    if (!audioCtxRef.current) return;
+
+    const osc = audioCtxRef.current.createOscillator();
+    const gain = audioCtxRef.current.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(800 + Math.random() * 200, audioCtxRef.current.currentTime);
+    gain.gain.setValueAtTime(0.05, audioCtxRef.current.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtxRef.current.currentTime + 0.1);
+
+    osc.connect(gain);
+    gain.connect(audioCtxRef.current.destination);
+
+    osc.start();
+    osc.stop(audioCtxRef.current.currentTime + 0.1);
   };
 
   const startBoot = () => {
     if (currentLineIndex >= 0) return; // Already started
-
-    // Init logic
+    initAudio();
     setCurrentLineIndex(0);
-    try {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioCtxRef.current.resume();
-    } catch (e) { console.warn("Audio Init Failed"); }
   };
 
   // Auto-start timer
@@ -127,18 +153,16 @@ const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
   // Text Sequence Logic
   useEffect(() => {
     if (currentLineIndex >= 0 && currentLineIndex < BOOT_TEXT.length) {
-      // Play beep for new line
       playBeep();
     } else if (currentLineIndex >= BOOT_TEXT.length) {
-      setTimeout(onComplete, 1000);
+      setTimeout(onComplete, 1500);
     }
   }, [currentLineIndex]);
 
   const handleLineComplete = () => {
-    setTimeout(() => {
-      setCompletedLines(prev => [...prev, BOOT_TEXT[currentLineIndex]]);
-      setCurrentLineIndex(prev => prev + 1);
-    }, 200); // Small pause between lines
+    // Immediate next line
+    setCompletedLines(prev => [...prev, BOOT_TEXT[currentLineIndex]]);
+    setCurrentLineIndex(prev => prev + 1);
   };
 
 
@@ -146,8 +170,8 @@ const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
     return (
       <Container onClick={startBoot}>
         <Prompt>
-          <div>SYSTEM HALTED</div>
-          <div><Blink>_</Blink> PRESS ANY KEY (OR WAIT 5s)</div>
+          <GlitchText>SYSTEM HALTED</GlitchText>
+          <div style={{ marginTop: '20px' }}><Blink>_</Blink> PRESS ANY KEY (OR WAIT 5s)</div>
         </Prompt>
       </Container>
     );

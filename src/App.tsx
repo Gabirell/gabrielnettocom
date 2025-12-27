@@ -4,7 +4,6 @@ import styled from 'styled-components';
 import BootSequence from './components/BootSequence';
 import CRTContainer from './components/CRTContainer';
 import Layout from './components/Layout';
-import TerminalController from './components/TerminalController';
 import Home from './pages/Home';
 import About from './pages/About';
 import Projects from './pages/Projects';
@@ -38,7 +37,6 @@ const App = () => {
           </Route>
         </Routes>
       )}
-      {isBooted && <TerminalController />}
     </CRTContainer>
   );
 };
