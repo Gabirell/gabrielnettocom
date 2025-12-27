@@ -3,13 +3,82 @@ import Terminal, { ColorMode, TerminalOutput } from 'react-terminal-ui';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
+// View States
+type ViewState = 'MAXIMIZED' | 'MINIMIZED_BOX' | 'MINIMIZED_DOT';
+
+// --- Styled Components ---
+
+const Container = styled.div<{ $viewState: ViewState }>`
+    ${props => props.$viewState === 'MAXIMIZED' && `
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        border-top: 2px solid var(--terminal-green);
+        background: rgba(0, 0, 0, 0.9);
+    `}
+    
+    ${props => props.$viewState === 'MINIMIZED_BOX' && `
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 200px;
+        border: 2px solid var(--terminal-green);
+        background: #000;
+        z-index: 100;
+        box-shadow: 0 0 10px var(--terminal-green);
+    `}
+
+    ${props => props.$viewState === 'MINIMIZED_DOT' && `
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 40px;
+        height: 40px;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `}
+`;
+
+const Header = styled.div`
+    display: flex;
+    justify-content: flex-end; /* Buttons on the right */
+    align-items: center;
+    padding: 5px 10px;
+    background: var(--terminal-green);
+    gap: 8px;
+    height: 24px;
+`;
+
+const Title = styled.div`
+    flex: 1;
+    color: #000;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    padding-left: 5px;
+`;
+
+const ControlButton = styled.div<{ $color: string }>`
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: ${props => props.$color};
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.3);
+    
+    &:hover {
+        filter: brightness(1.2);
+    }
+`;
+
 const TerminalWrapper = styled.div`
   height: 180px; 
   min-height: 180px;
-  border-top: 2px solid var(--terminal-green);
   opacity: 0.9;
   font-size: 1rem;
-  flex-shrink: 0; /* Prevent resizing/jumping */
+  flex-shrink: 0;
   
   .react-terminal-wrapper {
       padding: 10px;
@@ -33,14 +102,44 @@ const FooterLinks = styled.div`
 const Link = styled.a`
     color: var(--terminal-green);
     text-transform: uppercase;
-    &:hover { color: #fff; }
+    text-decoration: none;
+    &:hover { color: #fff; text-decoration: underline; }
 `;
+
+// Minimized Views
+const MinimizedBoxContent = styled.div`
+    padding: 5px;
+    color: var(--terminal-green);
+    font-family: var(--font-main);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+`;
+
+const DotButton = styled.div`
+    width: 20px;
+    height: 20px;
+    background-color: var(--terminal-green);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 5px var(--terminal-green);
+    animation: pulse 2s infinite;
+
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.8; }
+    }
+`;
+
+// --- Main Component ---
 
 const TerminalController: React.FC = () => {
   const navigate = useNavigate();
+  const [viewState, setViewState] = useState<ViewState>('MAXIMIZED');
   const [terminalLineData, setTerminalLineData] = useState([
-    <TerminalOutput key="welcome">Welcome to my personal site.</TerminalOutput>,
-    <TerminalOutput key="help">Type 'help' for a list of commands.</TerminalOutput>
+    <TerminalOutput key="welcome">Welcome to the terminal. Type 'help' for a list of commands.</TerminalOutput>
   ]);
 
   const handleInput = (terminalInput: string) => {
@@ -74,25 +173,63 @@ const TerminalController: React.FC = () => {
     setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>, output]);
   };
 
+  // State Transitions
+  const toMaximized = () => setViewState('MAXIMIZED');
+  const toMinBox = () => setViewState('MINIMIZED_BOX');
+  const toMinDot = () => setViewState('MINIMIZED_DOT');
+
+  // Render Logic
   return (
-    <>
-      <TerminalWrapper>
-        <Terminal
-          name='gabrielnetto-terminal'
-          colorMode={ColorMode.Dark}
-          onInput={handleInput}
-          height='180px'
-        >
-          {terminalLineData}
-        </Terminal>
-      </TerminalWrapper>
-      <FooterLinks>
-        <span>CONTACTS:</span>
-        <Link href="mailto:gabriel@example.com">Email</Link>
-        <Link href="https://github.com" target="_blank">GitHub</Link>
-        <Link href="https://linkedin.com" target="_blank">LinkedIn</Link>
-      </FooterLinks>
-    </>
+    <Container $viewState={viewState}>
+      {/* Render Logic based on State */}
+
+      {viewState === 'MAXIMIZED' && (
+        <>
+          <Header>
+            <Title>gabrielnetto-terminal</Title>
+            {/* Red: To Dot */}
+            <ControlButton $color="#ff5f56" onClick={toMinDot} title="Minimize to Dot" />
+            {/* Yellow: To Box */}
+            <ControlButton $color="#ffbd2e" onClick={toMinBox} title="Minimize to Box" />
+            {/* Green: Maximize (No-op here really, or restore) */}
+            <ControlButton $color="#27c93f" onClick={toMaximized} title="Maximize" />
+          </Header>
+          <TerminalWrapper>
+            <Terminal
+              name='gabrielnetto-terminal'
+              colorMode={ColorMode.Dark}
+              onInput={handleInput}
+              height='180px'
+            >
+              {terminalLineData}
+            </Terminal>
+          </TerminalWrapper>
+          <FooterLinks>
+            <span>CONTACTS:</span>
+            <Link href="mailto:gabriel@example.com">Email</Link>
+            <Link href="https://github.com/Gabirell" target="_blank">GitHub</Link>
+            <Link href="https://linkedin.com" target="_blank">LinkedIn</Link>
+          </FooterLinks>
+        </>
+      )}
+
+      {viewState === 'MINIMIZED_BOX' && (
+        <MinimizedBoxContent onClick={toMaximized}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Terminal</span>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <ControlButton $color="#ff5f56" onClick={(e) => { e.stopPropagation(); toMinDot(); }} />
+              <ControlButton $color="#27c93f" />
+            </div>
+          </div>
+          <div style={{ fontSize: '0.8rem', opacity: 0.7 }}> Click to restore...</div>
+        </MinimizedBoxContent>
+      )}
+
+      {viewState === 'MINIMIZED_DOT' && (
+        <DotButton onClick={toMaximized} title="Open Terminal" />
+      )}
+    </Container>
   );
 };
 
