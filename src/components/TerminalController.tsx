@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 // View States
-type ViewState = 'MAXIMIZED' | 'MINIMIZED_BOX' | 'MINIMIZED_DOT';
+type ViewState = 'MAXIMIZED' | 'MINIMIZED_BOX' | 'MINIMIZED_DOT' | 'EXPANDED';
 
 // --- Styled Components ---
 
@@ -14,7 +14,22 @@ const Container = styled.div<{ $viewState: ViewState }>`
         display: flex;
         flex-direction: column;
         border-top: 2px solid var(--terminal-green);
-        background: rgba(0, 0, 0, 0.9);
+        background: rgba(0, 0, 0, 0.95);
+        position: relative;
+    `}
+
+    ${props => props.$viewState === 'EXPANDED' && `
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 80vh;
+        display: flex;
+        flex-direction: column;
+        border-top: 2px solid var(--terminal-green);
+        background: rgba(0, 0, 0, 0.98);
+        z-index: 200;
+        box-shadow: 0 -5px 20px rgba(0, 255, 0, 0.2);
     `}
     
     ${props => props.$viewState === 'MINIMIZED_BOX' && `
@@ -49,6 +64,11 @@ const Header = styled.div`
     background: var(--terminal-green);
     gap: 8px;
     height: 24px;
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+        padding: 2px 5px;
+    }
 `;
 
 const Title = styled.div`
@@ -73,12 +93,21 @@ const ControlButton = styled.div<{ $color: string }>`
     }
 `;
 
-const TerminalWrapper = styled.div`
-  height: 180px; 
-  min-height: 180px;
+const TerminalWrapper = styled.div<{ $isExpanded: boolean }>`
+  height: ${props => props.$isExpanded ? '100%' : '180px'}; 
+  min-height: ${props => props.$isExpanded ? '100%' : '180px'};
   opacity: 0.9;
   font-size: 1rem;
-  flex-shrink: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 768px) {
+    height: ${props => props.$isExpanded ? '100%' : '140px'};
+    min-height: ${props => props.$isExpanded ? '100%' : '140px'};
+    font-size: 0.8rem;
+  }
+  
   overflow: hidden; /* Ensure scrollbar is handled by inner content */
   
   /* Hide default react-terminal-ui buttons (the overlapping dots) */
@@ -106,9 +135,28 @@ const TerminalWrapper = styled.div`
           background: #001100;
       }
   }
+
+  /* NUCLEAR CSS FIX: Force everything to wrap, no exceptions */
+  .react-terminal-wrapper,
+  .react-terminal-line,
+  .react-terminal-line *,
+  div, span, pre, p {
+      white-space: pre-wrap !important;
+      overflow-wrap: break-word !important;
+      word-wrap: break-word !important;
+      word-break: break-word !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      height: auto !important;
+      display: block !important;
+  }
   
-  .react-terminal-line {
-      line-height: 1.4;
+  /* Except specific UI elements if needed, but for now block is safer for wrapping */
+
+  @media (max-width: 768px) {
+      .react-terminal-wrapper {
+          padding: 5px;
+      }
   }
 `;
 
@@ -144,6 +192,25 @@ const DotButton = styled.div`
 const TerminalController: React.FC = () => {
   const navigate = useNavigate();
   const [viewState, setViewState] = useState<ViewState>('MAXIMIZED');
+  // Force-inject CSS to guarantee wrapping (Fail-safe)
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .react-terminal-wrapper, .react-terminal-line, .react-terminal-line *, .react-terminal-line span, 
+      [class*="react-terminal-line"] {
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        height: auto !important;
+        display: block !important;
+        max-width: 100% !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, []);
+
   const [terminalLineData, setTerminalLineData] = useState([
     <TerminalOutput key="welcome">Welcome to the terminal. Type 'help' for a list of commands.</TerminalOutput>
   ]);
@@ -151,6 +218,7 @@ const TerminalController: React.FC = () => {
 
   // State Transitions
   const toMaximized = () => setViewState('MAXIMIZED');
+  const toExpanded = () => setViewState(prev => prev === 'EXPANDED' ? 'MAXIMIZED' : 'EXPANDED');
   const toMinBox = () => setViewState('MINIMIZED_BOX');
   const toMinDot = () => setViewState('MINIMIZED_DOT');
 
@@ -187,8 +255,8 @@ const TerminalController: React.FC = () => {
     setIsThinking(true);
 
     try {
-      // Send to n8n Webhook
-      const response = await fetch('https://n8n.gabrielnetto.com/webhook/chat', {
+      // Send to n8n Webhook via Nginx Proxy (No CORS constraints)
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: terminalInput })
@@ -213,7 +281,7 @@ const TerminalController: React.FC = () => {
     <Container $viewState={viewState}>
       {/* Render Logic based on State */}
 
-      {viewState === 'MAXIMIZED' && (
+      {(viewState === 'MAXIMIZED' || viewState === 'EXPANDED') && (
         <>
           <Header>
             <Title>gabrielnetto-terminal</Title>
@@ -221,15 +289,15 @@ const TerminalController: React.FC = () => {
             <ControlButton $color="#ff5f56" onClick={toMinDot} title="Minimize to Dot" />
             {/* Yellow: To Box */}
             <ControlButton $color="#ffbd2e" onClick={toMinBox} title="Minimize to Box" />
-            {/* Green: Maximize (No-op here really, or restore) */}
-            <ControlButton $color="#27c93f" onClick={toMaximized} title="Maximize" />
+            {/* Green: Expand/Restore */}
+            <ControlButton $color="#27c93f" onClick={toExpanded} title="Expand/Restore" />
           </Header>
-          <TerminalWrapper>
+          <TerminalWrapper $isExpanded={viewState === 'EXPANDED'}>
             <Terminal
               name=' '
               colorMode={ColorMode.Dark}
               onInput={handleInput}
-              height='180px'
+              height={viewState === 'EXPANDED' ? '100%' : '180px'}
             >
               {terminalLineData}
               {isThinking && <TerminalOutput><span style={{ color: 'var(--terminal-green)', animation: 'blink 1s infinite' }}>Thinking...</span></TerminalOutput>}

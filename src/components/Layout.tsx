@@ -13,6 +13,14 @@ const OuterContainer = styled.div`
   margin: 0 auto;
   background-color: var(--terminal-bg);
   box-shadow: 0 0 20px var(--terminal-green);
+
+  @media (max-width: 768px) {
+    width: 100%;
+    margin: 0;
+    border: none;
+    border-top: 2px solid var(--terminal-green);
+    border-bottom: 2px solid var(--terminal-green);
+  }
 `;
 
 const HeaderBar = styled.div`
@@ -24,6 +32,11 @@ const HeaderBar = styled.div`
   font-weight: bold;
   text-transform: uppercase;
   font-size: 1.2rem;
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    padding: 4px;
+  }
 `;
 
 const HeaderLeft = styled.div``;
@@ -35,11 +48,23 @@ const MenuBar = styled.div`
   padding: 8px;
   gap: 16px;
   outline: none; /* Focus handled by items */
+
+  @media (max-width: 768px) {
+    gap: 8px;
+    padding: 4px;
+    justify-content: space-around;
+    flex-wrap: wrap;
+  }
 `;
 
 const MenuItem = styled(NavLink)`
   color: var(--terminal-green);
   font-size: 1.1rem;
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    padding: 4px 8px;
+  }
   padding: 2px 10px;
   border: 1px solid transparent;
   cursor: pointer;
@@ -59,6 +84,10 @@ const MenuItem = styled(NavLink)`
 const MainContent = styled.div`
   flex: 1;
   padding: 20px;
+
+  @media (max-width: 768px) {
+    padding: 10px;
+  }
   overflow-y: auto;
   position: relative;
   &::-webkit-scrollbar { width: 0; }
@@ -73,6 +102,12 @@ const FooterLinks = styled.div`
     font-family: var(--font-main);
     justify-content: flex-end;
     margin-top: auto;
+
+    @media (max-width: 768px) {
+      justify-content: center;
+      font-size: 0.8rem;
+      padding: 5px;
+    }
 `;
 
 const Link = styled.a`
