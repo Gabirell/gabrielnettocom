@@ -1,0 +1,173 @@
+import React, { useState, useEffect, useRef } from 'react';
+import styled from 'styled-components';
+
+const BOOT_TEXT = [
+  "LOAD \"\"",
+  "CPU: NETTO-PROCESSOR 64-BIT, 24 CORES",
+  "640K RAM SYSTEM... OK",
+  "LOADING GABRIEL_NETTO_KERNEL...",
+  "  > MOUNTING BLENDER_MODULES... SUCCESS",
+  "  > CONNECTING TO ORACLE_CLOUD... SUCCESS",
+  "  > INITIALIZING GODOT_PLUGINS... SUCCESS",
+  "  > CHECKING SWIFT_COMPILER... READY",
+  "SYSTEM BOOT SEQUENCE COMPLETE.",
+  "ENTERING GRAPHICAL USER INTERFACE..."
+];
+
+const Container = styled.div`
+    background-color: black;
+    color: #00FF00;
+    font-family: 'VT323', monospace;
+    font-size: 24px;
+    height: 100%;
+    width: 100%;
+    padding: 2rem;
+    overflow-y: auto;
+    text-shadow: 0 0 5px #00FF00;
+    position: relative;
+`;
+
+const Prompt = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    cursor: pointer;
+    flex-direction: column;
+`;
+
+const Blink = styled.span`
+    animation: blink 1s step-end infinite;
+    @keyframes blink {
+        50% { opacity: 0; }
+    }
+`;
+
+// Helper for random char
+const randomChar = () => {
+  const chars = '!@#$%^&*()_+-=[]{}|;:,.<>?/1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  return chars[Math.floor(Math.random() * chars.length)];
+};
+
+const DecodingLine = ({ text, onComplete }: { text: string, onComplete: () => void }) => {
+  const [display, setDisplay] = useState('');
+  const [isResolved, setIsResolved] = useState(false);
+
+  useEffect(() => {
+    let iterations = 0;
+    const maxIterations = 20; // How long to scramble
+
+    const interval = setInterval(() => {
+      if (iterations >= maxIterations) {
+        setDisplay(text);
+        setIsResolved(true);
+        clearInterval(interval);
+        onComplete();
+        return;
+      }
+
+      // Scramble effect
+      setDisplay(text.split('').map((char, i) => {
+        if (Math.random() > 0.5) return randomChar();
+        return char;
+      }).join(''));
+
+      iterations++;
+    }, 30); // Speed of scramble
+
+    return () => clearInterval(interval);
+  }, [text]);
+
+  return <div>{display}</div>;
+};
+
+const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
+  const [currentLineIndex, setCurrentLineIndex] = useState(-1); // -1 = waiting
+  const [completedLines, setCompletedLines] = useState<string[]>([]);
+
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const playBeep = () => {
+    if (!audioCtxRef.current) return;
+    try {
+      const osc = audioCtxRef.current.createOscillator();
+      const gain = audioCtxRef.current.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(800, audioCtxRef.current.currentTime);
+      gain.gain.setValueAtTime(0.05, audioCtxRef.current.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtxRef.current.currentTime + 0.1);
+      osc.connect(gain);
+      gain.connect(audioCtxRef.current.destination);
+      osc.start();
+      osc.stop(audioCtxRef.current.currentTime + 0.1);
+    } catch (e) {
+      console.warn("Audio play failed", e);
+    }
+  };
+
+  const startBoot = () => {
+    if (currentLineIndex >= 0) return; // Already started
+
+    // Init logic
+    setCurrentLineIndex(0);
+    try {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioCtxRef.current.resume();
+    } catch (e) { console.warn("Audio Init Failed"); }
+  };
+
+  // Auto-start timer
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      startBoot();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Text Sequence Logic
+  useEffect(() => {
+    if (currentLineIndex >= 0 && currentLineIndex < BOOT_TEXT.length) {
+      // Play beep for new line
+      playBeep();
+    } else if (currentLineIndex >= BOOT_TEXT.length) {
+      setTimeout(onComplete, 1000);
+    }
+  }, [currentLineIndex]);
+
+  const handleLineComplete = () => {
+    setTimeout(() => {
+      setCompletedLines(prev => [...prev, BOOT_TEXT[currentLineIndex]]);
+      setCurrentLineIndex(prev => prev + 1);
+    }, 200); // Small pause between lines
+  };
+
+
+  if (currentLineIndex === -1) {
+    return (
+      <Container onClick={startBoot}>
+        <Prompt>
+          <div>SYSTEM HALTED</div>
+          <div><Blink>_</Blink> PRESS ANY KEY (OR WAIT 5s)</div>
+        </Prompt>
+      </Container>
+    );
+  }
+
+  return (
+    <Container>
+      {completedLines.map((line, i) => (
+        <div key={i}>{line}</div>
+      ))}
+
+      {currentLineIndex < BOOT_TEXT.length && (
+        <DecodingLine
+          text={BOOT_TEXT[currentLineIndex]}
+          onComplete={handleLineComplete}
+        />
+      )}
+      <Blink>_</Blink>
+    </Container>
+  );
+};
+
+export default BootSequence;
