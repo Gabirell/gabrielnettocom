@@ -108,40 +108,6 @@ const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
 
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const initAudio = () => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume();
-    }
-  };
-
-  const playBeep = () => {
-    initAudio();
-    if (!audioCtxRef.current) return;
-
-    const osc = audioCtxRef.current.createOscillator();
-    const gain = audioCtxRef.current.createGain();
-
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(800 + Math.random() * 200, audioCtxRef.current.currentTime);
-    gain.gain.setValueAtTime(0.05, audioCtxRef.current.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtxRef.current.currentTime + 0.1);
-
-    osc.connect(gain);
-    gain.connect(audioCtxRef.current.destination);
-
-    osc.start();
-    osc.stop(audioCtxRef.current.currentTime + 0.1);
-  };
-
-  const startBoot = () => {
-    if (currentLineIndex >= 0) return; // Already started
-    initAudio();
-    setCurrentLineIndex(0);
-  };
-
   // Auto-start timer
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -149,6 +115,22 @@ const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
     }, 5000);
     return () => clearTimeout(timer);
   }, []);
+
+  const initAudio = () => {
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume().catch(() => {
+          // Auto-play policy prevented resuming. User interaction needed.
+          // We silent fail here to avoid console spam.
+        });
+      }
+    } catch (e) {
+      // Audio API not supported or blocked
+    }
+  };
 
   // Text Sequence Logic
   useEffect(() => {
