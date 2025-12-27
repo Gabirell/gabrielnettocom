@@ -1,6 +1,6 @@
 import styled from 'styled-components';
-import { NavLink, Outlet } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import TerminalController from './TerminalController';
 
 const OuterContainer = styled.div`
@@ -34,6 +34,7 @@ const MenuBar = styled.div`
   border-bottom: 2px solid var(--terminal-green);
   padding: 8px;
   gap: 16px;
+  outline: none; /* Focus handled by items */
 `;
 
 const MenuItem = styled(NavLink)`
@@ -43,13 +44,15 @@ const MenuItem = styled(NavLink)`
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.1s;
-  border-radius: 6px; /* Rounded distortion */
+  border-radius: 6px;
+  text-decoration: none;
   
-  &:hover, &.active {
+  &:hover, &.active, &:focus {
     background-color: var(--terminal-green);
     color: #000;
     box-shadow: 0 0 8px var(--terminal-green);
     transform: scale(1.05);
+    outline: none;
   }
 `;
 
@@ -58,17 +61,26 @@ const MainContent = styled.div`
   padding: 20px;
   overflow-y: auto;
   position: relative;
-  /* Visual scrollbar hidden for cleaner look */
   &::-webkit-scrollbar { width: 0; }
 `;
 
+const MENU_ITEMS = [
+  { label: 'Home', path: '/' },
+  { label: 'Apps', path: '/apps' },
+  { label: 'Games', path: '/games' },
+  { label: 'Arts', path: '/arts' },
+  { label: 'About', path: '/about' },
+  { label: 'Admin', path: '/admin' }
+];
+
 const Layout = () => {
   const [dateTime, setDateTime] = useState('');
+  const navigate = useNavigate();
+  const menuRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      // Format: BIOS DATE 12/25/25 15:23:01 VER 1.0.2
       const dateStr = now.toLocaleDateString('en-US', {
         month: '2-digit', day: '2-digit', year: '2-digit'
       });
@@ -83,6 +95,38 @@ const Layout = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Keyboard Navigation Logic
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle nav if we are not inside input (simple check)
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea') return;
+
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        const current = menuRefs.current.findIndex(el => el === document.activeElement);
+        const next = (current + 1) % MENU_ITEMS.length;
+        menuRefs.current[next]?.focus();
+        navigate(MENU_ITEMS[next].path);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        const current = menuRefs.current.findIndex(el => el === document.activeElement);
+        const prev = (current - 1 + MENU_ITEMS.length) % MENU_ITEMS.length;
+        menuRefs.current[prev]?.focus();
+        navigate(MENU_ITEMS[prev].path);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+
+  // Initial Focus
+  useEffect(() => {
+    // Focus home on mount if nothing focused
+    if (document.activeElement === document.body) {
+      menuRefs.current[0]?.focus();
+    }
+  }, [])
+
   return (
     <OuterContainer>
       <HeaderBar>
@@ -90,12 +134,15 @@ const Layout = () => {
         <HeaderRight>/gabrielnetto ~%</HeaderRight>
       </HeaderBar>
       <MenuBar>
-        <MenuItem to="/">Home</MenuItem>
-        <MenuItem to="/apps">Apps</MenuItem>
-        <MenuItem to="/games">Games</MenuItem>
-        <MenuItem to="/arts">Arts</MenuItem>
-        <MenuItem to="/about">About</MenuItem>
-        <MenuItem to="/admin">Admin</MenuItem>
+        {MENU_ITEMS.map((item, index) => (
+          <MenuItem
+            key={item.path}
+            to={item.path}
+            ref={el => menuRefs.current[index] = el}
+          >
+            {item.label}
+          </MenuItem>
+        ))}
       </MenuBar>
       <MainContent>
         <Outlet />

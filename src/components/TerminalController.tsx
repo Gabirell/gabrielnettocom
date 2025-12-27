@@ -79,11 +79,34 @@ const TerminalWrapper = styled.div`
   opacity: 0.9;
   font-size: 1rem;
   flex-shrink: 0;
+  overflow: hidden; /* Ensure scrollbar is handled by inner content */
   
+  /* Hide default react-terminal-ui buttons (the overlapping dots) */
+  .react-terminal-window-buttons {
+      display: none !important;
+  }
+
   .react-terminal-wrapper {
       padding: 10px;
       height: 100%;
+      overflow-y: auto;
+      
+      /* Classic Green Scrollbar */
+      &::-webkit-scrollbar {
+          width: 12px;
+          background: #000;
+          border-left: 1px solid var(--terminal-green);
+      }
+      &::-webkit-scrollbar-thumb {
+          background: var(--terminal-green);
+          border: 1px solid #000;
+          box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+      }
+      &::-webkit-scrollbar-track {
+          background: #001100;
+      }
   }
+  
   .react-terminal-line {
       line-height: 1.4;
   }
