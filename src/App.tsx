@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import BootSequence from './components/BootSequence';
 import CRTContainer from './components/CRTContainer';
@@ -9,7 +9,7 @@ import About from './pages/About';
 import Projects from './pages/Projects';
 import Admin from './pages/Admin';
 
-// Placeholder Pages for new menu items
+// Placeholder Pages
 const Placeholder = ({ title }: { title: string }) => (
   <div style={{ padding: '20px', fontFamily: "'VT323', monospace", fontSize: '24px' }}>
     <h1>{title}</h1>
@@ -20,10 +20,19 @@ const Placeholder = ({ title }: { title: string }) => (
 const App = () => {
   const [isBooted, setIsBooted] = useState(false);
 
+  useEffect(() => {
+    console.log('%c [DEBUG] App Mounted. isBooted:', 'color: magenta', isBooted);
+  }, []);
+
+  console.log('%c [DEBUG] App Render. isBooted:', 'color: magenta', isBooted);
+
   return (
     <CRTContainer>
       {!isBooted ? (
-        <BootSequence onComplete={() => setIsBooted(true)} />
+        <BootSequence onComplete={() => {
+          console.log('%c [DEBUG] Boot Complete Triggered', 'color: magenta');
+          setIsBooted(true);
+        }} />
       ) : (
         <Routes>
           <Route path="/" element={<Layout />}>

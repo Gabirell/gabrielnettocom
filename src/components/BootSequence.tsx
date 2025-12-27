@@ -105,7 +105,6 @@ const DecodingLine = ({ text, onComplete }: { text: string, onComplete: () => vo
 const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
   const [currentLineIndex, setCurrentLineIndex] = useState(-1); // -1 = waiting
   const [completedLines, setCompletedLines] = useState<string[]>([]);
-
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Auto-start timer
@@ -119,17 +118,46 @@ const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
   const initAudio = () => {
     try {
       if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        // @ts-ignore - Handle webkit prefix if needed
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtxRef.current = new AudioContextClass();
+        }
       }
-      if (audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume().catch(() => {
-          // Auto-play policy prevented resuming. User interaction needed.
-          // We silent fail here to avoid console spam.
-        });
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume().catch(e => console.warn("Audio resume failed:", e));
       }
     } catch (e) {
-      // Audio API not supported or blocked
+      console.warn("Audio init failed:", e);
     }
+  };
+
+  const playBeep = () => {
+    try {
+      if (!audioCtxRef.current) return;
+      const oscillator = audioCtxRef.current.createOscillator();
+      const gainNode = audioCtxRef.current.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtxRef.current.destination);
+
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(440, audioCtxRef.current.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtxRef.current.currentTime + 0.1);
+
+      gainNode.gain.setValueAtTime(0.05, audioCtxRef.current.currentTime); // Low volume
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtxRef.current.currentTime + 0.1);
+
+      oscillator.start();
+      oscillator.stop(audioCtxRef.current.currentTime + 0.1);
+    } catch (e) {
+      // Ignore audio errors during boot
+    }
+  };
+
+  const startBoot = () => {
+    initAudio();
+    setCurrentLineIndex(0);
   };
 
   // Text Sequence Logic
@@ -142,11 +170,9 @@ const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
   }, [currentLineIndex]);
 
   const handleLineComplete = () => {
-    // Immediate next line
     setCompletedLines(prev => [...prev, BOOT_TEXT[currentLineIndex]]);
     setCurrentLineIndex(prev => prev + 1);
   };
-
 
   if (currentLineIndex === -1) {
     return (
