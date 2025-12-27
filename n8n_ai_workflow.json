@@ -1,0 +1,96 @@
+{
+  "name": "Terminal AI Chat",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Terminal Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        460,
+        340
+      ],
+      "webhookId": "terminal-chat"
+    },
+    {
+      "parameters": {
+        "content": "## AI Agent Setup\n1. Delete the **Mock AI Response** node.\n2. Add an **AI Agent** node here.\n3. Connect it to a **Chat Model** (e.g., Google Gemini, OpenAI, Groq).\n4. In the System Prompt, paste your Resume/Bio context.\n5. Connect the output to **Respond to Webhook**."
+      },
+      "id": "instructions-note",
+      "name": "Setup Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        700,
+        200
+      ],
+      "width": 400,
+      "height": 200
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "output",
+              "value": "I am the Gabriel Netto AI Assistant. I can answer questions about his curriculum, projects, and skills. (Please configure my AI model in n8n!)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mock-response",
+      "name": "Mock AI Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        860,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.output }}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Terminal",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1260,
+        340
+      ]
+    }
+  ],
+  "connections": {
+    "Terminal Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Mock AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mock AI Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Terminal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

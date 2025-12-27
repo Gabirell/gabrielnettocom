@@ -181,11 +181,6 @@ const TerminalController: React.FC = () => {
     setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>, output]);
   };
 
-  // State Transitions
-  const toMaximized = () => setViewState('MAXIMIZED');
-  const toMinBox = () => setViewState('MINIMIZED_BOX');
-  const toMinDot = () => setViewState('MINIMIZED_DOT');
-
   // Render Logic
   return (
     <Container $viewState={viewState}>
@@ -210,6 +205,7 @@ const TerminalController: React.FC = () => {
               height='180px'
             >
               {terminalLineData}
+              {isThinking && <TerminalOutput><span style={{ color: 'var(--terminal-green)', animation: 'blink 1s infinite' }}>Thinking...</span></TerminalOutput>}
             </Terminal>
           </TerminalWrapper>
         </>
