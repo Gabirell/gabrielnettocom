@@ -64,13 +64,31 @@ const MainContent = styled.div`
   &::-webkit-scrollbar { width: 0; }
 `;
 
+const FooterLinks = styled.div`
+    display: flex;
+    gap: 20px;
+    padding: 5px 15px;
+    border-top: 1px dashed var(--terminal-green);
+    background: #000;
+    font-family: var(--font-main);
+    justify-content: flex-end;
+    margin-top: auto;
+`;
+
+const Link = styled.a`
+    color: var(--terminal-green);
+    text-transform: uppercase;
+    text-decoration: none;
+    &:hover { color: #fff; text-decoration: underline; }
+`;
+
+// "Admin" removed from menu items
 const MENU_ITEMS = [
   { label: 'Home', path: '/' },
   { label: 'Apps', path: '/apps' },
   { label: 'Games', path: '/games' },
   { label: 'Arts', path: '/arts' },
-  { label: 'About', path: '/about' },
-  { label: 'Admin', path: '/admin' }
+  { label: 'About', path: '/about' }
 ];
 
 const Layout = () => {
@@ -131,7 +149,10 @@ const Layout = () => {
     <OuterContainer>
       <HeaderBar>
         <HeaderLeft>{dateTime}</HeaderLeft>
-        <HeaderRight>/gabrielnetto ~%</HeaderRight>
+        {/* Admin Link in Header */}
+        <NavLink to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <HeaderRight>/GABRIELNETTO % (ADMIN)</HeaderRight>
+        </NavLink>
       </HeaderBar>
       <MenuBar>
         {MENU_ITEMS.map((item, index) => (
@@ -148,6 +169,13 @@ const Layout = () => {
         <Outlet />
       </MainContent>
       <TerminalController />
+      {/* Persistent Footer */}
+      <FooterLinks>
+        <span>CONTACTS:</span>
+        <Link href="mailto:gabriel@example.com">Email</Link>
+        <Link href="https://github.com/Gabirell" target="_blank">GitHub</Link>
+        <Link href="https://linkedin.com" target="_blank">LinkedIn</Link>
+      </FooterLinks>
     </OuterContainer>
   );
 };

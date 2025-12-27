@@ -112,22 +112,7 @@ const TerminalWrapper = styled.div`
   }
 `;
 
-const FooterLinks = styled.div`
-    display: flex;
-    gap: 20px;
-    padding: 5px 15px;
-    border-top: 1px dashed var(--terminal-green);
-    background: #000;
-    font-family: var(--font-main);
-    justify-content: flex-end;
-`;
-
-const Link = styled.a`
-    color: var(--terminal-green);
-    text-transform: uppercase;
-    text-decoration: none;
-    &:hover { color: #fff; text-decoration: underline; }
-`;
+// FooterLinks removed from here, moved to Layout.tsx
 
 // Minimized Views
 const MinimizedBoxContent = styled.div`
@@ -162,7 +147,7 @@ const TerminalController: React.FC = () => {
   const navigate = useNavigate();
   const [viewState, setViewState] = useState<ViewState>('MAXIMIZED');
   const [terminalLineData, setTerminalLineData] = useState([
-    <TerminalOutput key="welcome">Welcome to the terminal. Type 'help' for a list of commands.</TerminalOutput>
+    <TerminalOutput key="welcome">G:/~ Bem-vind@ / Welcome / Bienvenid@ to GABRIEL NETTO'S website.</TerminalOutput>
   ]);
 
   const handleInput = (terminalInput: string) => {
@@ -219,7 +204,7 @@ const TerminalController: React.FC = () => {
           </Header>
           <TerminalWrapper>
             <Terminal
-              name='gabrielnetto-terminal'
+              name=' '
               colorMode={ColorMode.Dark}
               onInput={handleInput}
               height='180px'
@@ -227,12 +212,6 @@ const TerminalController: React.FC = () => {
               {terminalLineData}
             </Terminal>
           </TerminalWrapper>
-          <FooterLinks>
-            <span>CONTACTS:</span>
-            <Link href="mailto:gabriel@example.com">Email</Link>
-            <Link href="https://github.com/Gabirell" target="_blank">GitHub</Link>
-            <Link href="https://linkedin.com" target="_blank">LinkedIn</Link>
-          </FooterLinks>
         </>
       )}
 
