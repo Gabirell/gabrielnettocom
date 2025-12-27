@@ -112,8 +112,6 @@ const TerminalWrapper = styled.div`
   }
 `;
 
-// FooterLinks removed from here, moved to Layout.tsx
-
 // Minimized Views
 const MinimizedBoxContent = styled.div`
     padding: 5px;
@@ -147,38 +145,67 @@ const TerminalController: React.FC = () => {
   const navigate = useNavigate();
   const [viewState, setViewState] = useState<ViewState>('MAXIMIZED');
   const [terminalLineData, setTerminalLineData] = useState([
-    <TerminalOutput key="welcome">G:/~ Bem-vind@ / Welcome / Bienvenid@ to GABRIEL NETTO'S website.</TerminalOutput>
+    <TerminalOutput key="welcome">Welcome to the terminal. Type 'help' for a list of commands.</TerminalOutput>
   ]);
+  const [isThinking, setIsThinking] = useState(false);
 
-  const handleInput = (terminalInput: string) => {
+  // State Transitions
+  const toMaximized = () => setViewState('MAXIMIZED');
+  const toMinBox = () => setViewState('MINIMIZED_BOX');
+  const toMinDot = () => setViewState('MINIMIZED_DOT');
+
+  const handleInput = async (terminalInput: string) => {
     const [command] = terminalInput.split(' ');
-    let output;
 
-    switch (command.toLowerCase()) {
-      case 'help':
-        output = <TerminalOutput>Commands: about, apps, games, clear</TerminalOutput>;
-        break;
-      case 'about':
-        navigate('/about');
-        output = <TerminalOutput>Navigating to About...</TerminalOutput>;
-        break;
-      case 'apps':
-        navigate('/apps');
-        output = <TerminalOutput>Opening Applications...</TerminalOutput>;
-        break;
-      case 'games':
-        navigate('/games');
-        output = <TerminalOutput>Loading Games...</TerminalOutput>;
-        break;
-      case 'clear':
-        setTerminalLineData([]);
-        return;
-      default:
-        output = <TerminalOutput>Command not found: {command}</TerminalOutput>;
-        break;
+    // Commands Logic
+    if (command.toLowerCase() === 'help') {
+      setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>, <TerminalOutput>Commands: about, apps, games, clear. Or just ask me a question!</TerminalOutput>]);
+      return;
+    }
+    if (command.toLowerCase() === 'about') {
+      setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>, <TerminalOutput>Navigating to About...</TerminalOutput>]);
+      navigate('/about');
+      return;
+    }
+    if (command.toLowerCase() === 'apps') {
+      setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>, <TerminalOutput>Opening Applications...</TerminalOutput>]);
+      navigate('/apps');
+      return;
+    }
+    if (command.toLowerCase() === 'games') {
+      setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>, <TerminalOutput>Loading Games...</TerminalOutput>]);
+      navigate('/games');
+      return;
+    }
+    if (command.toLowerCase() === 'clear') {
+      setTerminalLineData([]);
+      return;
     }
 
-    setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>, output]);
+    // AI Chat Logic (for unknown commands)
+    setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>]);
+    setIsThinking(true);
+
+    try {
+      // Send to n8n Webhook
+      const response = await fetch('https://n8n.gabrielnetto.com/webhook/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: terminalInput })
+      });
+
+      if (!response.ok) throw new Error('Network error');
+
+      const data = await response.json();
+      // Expecting { output: "AI Response" } or simply the text
+      const aiText = data.output || data.message || JSON.stringify(data);
+
+      setTerminalLineData(prev => [...prev, <TerminalOutput>{aiText}</TerminalOutput>]);
+    } catch (err) {
+      setTerminalLineData(prev => [...prev, <TerminalOutput>Error: Could not connect to AI mainframe. (Is n8n running?)</TerminalOutput>]);
+    } finally {
+      setIsThinking(false);
+    }
   };
 
   // Render Logic
