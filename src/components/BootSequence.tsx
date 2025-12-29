@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 
 const BOOT_TEXT = [
@@ -51,12 +51,12 @@ const Prompt = styled.div`
 `;
 
 const GlitchText = styled.div`
-  animation: ${skewAnim} 2s infinite;
-  display: inline-block;
-  color: red;
-  font-size: 3rem; /* Larger text */
-  font-weight: bold;
-  letter-spacing: 5px;
+    animation: ${skewAnim} 2s infinite;
+    display: inline-block;
+    color: red;
+    font-size: 3rem; /* Larger text */
+    font-weight: bold;
+    letter-spacing: 5px;
 `;
 
 const Blink = styled.span`
@@ -88,7 +88,7 @@ const DecodingLine = ({ text, onComplete }: { text: string, onComplete: () => vo
       }
 
       // Scramble effect
-      setDisplay(text.split('').map((char, i) => {
+      setDisplay(text.split('').map((char, _) => {
         if (Math.random() > 0.5) return randomChar();
         return char;
       }).join(''));
@@ -125,7 +125,7 @@ const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
         }
       }
       if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume().catch(e => console.warn("Audio resume failed:", e));
+        audioCtxRef.current.resume().catch((e: any) => console.warn("Audio resume failed:", e));
       }
     } catch (e) {
       console.warn("Audio init failed:", e);
