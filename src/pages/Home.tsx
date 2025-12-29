@@ -18,9 +18,7 @@ const WelcomeText = styled.div`
 
 const Home = () => {
   return (
-    <WelcomeText>
-      G:/~ Bem-vind@ / Welcome / Bienvenid@ to GABRIEL NETTO'S website.
-    </WelcomeText>
+    G://_Ask_me_anything...
   );
 };
 

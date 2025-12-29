@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 // View States
-type ViewState = 'MAXIMIZED' | 'MINIMIZED_BOX' | 'MINIMIZED_DOT' | 'EXPANDED';
+type ViewState = 'MAXIMIZED' | 'MINIMIZED_BOX' | 'MINIMIZED_DOT' | 'EXPANDED' | 'HEIGHT_70';
 
 // --- Styled Components ---
 
@@ -23,7 +23,21 @@ const Container = styled.div<{ $viewState: ViewState }>`
         bottom: 0;
         left: 0;
         width: 100%;
-        height: 80vh;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        border-top: 2px solid var(--terminal-green);
+        background: rgba(0, 0, 0, 0.98);
+        z-index: 200;
+        box-shadow: 0 -5px 20px rgba(0, 255, 0, 0.2);
+    `}
+
+    ${props => props.$viewState === 'HEIGHT_70' && `
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 70vh;
         display: flex;
         flex-direction: column;
         border-top: 2px solid var(--terminal-green);
@@ -212,13 +226,14 @@ const TerminalController: React.FC = () => {
   }, []);
 
   const [terminalLineData, setTerminalLineData] = useState([
-    <TerminalOutput key="welcome">Welcome to the terminal. Type 'help' for a list of commands.</TerminalOutput>
+    <TerminalOutput key="welcome">Welcome to the terminal. Type 'help' for a list of commands or ask me anything.</TerminalOutput>
   ]);
   const [isThinking, setIsThinking] = useState(false);
 
   // State Transitions
   const toMaximized = () => setViewState('MAXIMIZED');
-  const toExpanded = () => setViewState(prev => prev === 'EXPANDED' ? 'MAXIMIZED' : 'EXPANDED');
+  const toExpanded = () => setViewState(prev => prev === 'EXPANDED' ? 'HEIGHT_70' : 'EXPANDED'); // Green button logic
+  const toHeight70 = () => setViewState(prev => prev === 'HEIGHT_70' ? 'MAXIMIZED' : 'HEIGHT_70'); // Yellow button logic (Toggle 70% <-> Initial)
   const toMinBox = () => setViewState('MINIMIZED_BOX');
   const toMinDot = () => setViewState('MINIMIZED_DOT');
 
@@ -227,7 +242,7 @@ const TerminalController: React.FC = () => {
 
     // Commands Logic
     if (command.toLowerCase() === 'help') {
-      setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>, <TerminalOutput>Commands: about, apps, games, clear. Or just ask me a question!</TerminalOutput>]);
+      setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>, <TerminalOutput>Commands: about, apps, games, clear, ask. Or just ask me a question!</TerminalOutput>]);
       return;
     }
     if (command.toLowerCase() === 'about') {
@@ -248,6 +263,16 @@ const TerminalController: React.FC = () => {
     if (command.toLowerCase() === 'clear') {
       setTerminalLineData([]);
       return;
+    }
+
+    // Explicit 'ask' command (optional, as typing anything works too)
+    if (command.toLowerCase() === 'ask') {
+      const question = terminalInput.substring(4).trim();
+      if (!question) {
+        setTerminalLineData(prev => [...prev, <TerminalOutput>{`$ ${terminalInput}`}</TerminalOutput>, <TerminalOutput>Usage: ask [your question]</TerminalOutput>]);
+        return;
+      }
+      // Proceed to AI logic below (fallthrough)
     }
 
     // AI Chat Logic (for unknown commands)
@@ -281,23 +306,23 @@ const TerminalController: React.FC = () => {
     <Container $viewState={viewState}>
       {/* Render Logic based on State */}
 
-      {(viewState === 'MAXIMIZED' || viewState === 'EXPANDED') && (
+      {(viewState === 'MAXIMIZED' || viewState === 'EXPANDED' || viewState === 'HEIGHT_70') && (
         <>
           <Header>
             <Title>gabrielnetto-terminal</Title>
             {/* Red: To Dot */}
             <ControlButton $color="#ff5f56" onClick={toMinDot} title="Minimize to Dot" />
-            {/* Yellow: To Box */}
-            <ControlButton $color="#ffbd2e" onClick={toMinBox} title="Minimize to Box" />
-            {/* Green: Expand/Restore */}
-            <ControlButton $color="#27c93f" onClick={toExpanded} title="Expand/Restore" />
+            {/* Yellow: To 70% / Restore */}
+            <ControlButton $color="#ffbd2e" onClick={toHeight70} title="Toggle 70% Height" />
+            {/* Green: Full Screen */}
+            <ControlButton $color="#27c93f" onClick={toExpanded} title="Maximize (100%)" />
           </Header>
-          <TerminalWrapper $isExpanded={viewState === 'EXPANDED'}>
+          <TerminalWrapper $isExpanded={viewState === 'EXPANDED' || viewState === 'HEIGHT_70'}>
             <Terminal
               name=' '
               colorMode={ColorMode.Dark}
               onInput={handleInput}
-              height={viewState === 'EXPANDED' ? '100%' : '180px'}
+              height={viewState === 'EXPANDED' || viewState === 'HEIGHT_70' ? '100%' : '180px'}
             >
               {terminalLineData}
               {isThinking && <TerminalOutput><span style={{ color: 'var(--terminal-green)', animation: 'blink 1s infinite' }}>Thinking...</span></TerminalOutput>}
