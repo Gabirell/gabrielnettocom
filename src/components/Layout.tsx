@@ -194,7 +194,7 @@ const Layout = () => {
           <MenuItem
             key={item.path}
             to={item.path}
-            ref={el => menuRefs.current[index] = el}
+            ref={(el) => { menuRefs.current[index] = el; }}
           >
             {item.label}
           </MenuItem>

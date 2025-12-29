@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import styled from 'styled-components';
+// import styled from 'styled-components';
 import BootSequence from './components/BootSequence';
 import CRTContainer from './components/CRTContainer';
 import Layout from './components/Layout';
