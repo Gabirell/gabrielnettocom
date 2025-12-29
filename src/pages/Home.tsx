@@ -18,7 +18,9 @@ const WelcomeText = styled.div`
 
 const Home = () => {
   return (
-    G://_Ask_me_anything...
+    <WelcomeText>
+      G://_Ask_me_anything...
+    </WelcomeText>
   );
 };
 

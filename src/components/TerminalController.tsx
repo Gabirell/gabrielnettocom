@@ -19,11 +19,11 @@ const Container = styled.div<{ $viewState: ViewState }>`
     `}
 
     ${props => props.$viewState === 'EXPANDED' && `
-        position: fixed;
+        position: absolute;
         bottom: 0;
         left: 0;
         width: 100%;
-        height: 100vh;
+        height: 100%;
         display: flex;
         flex-direction: column;
         border-top: 2px solid var(--terminal-green);
@@ -33,11 +33,11 @@ const Container = styled.div<{ $viewState: ViewState }>`
     `}
 
     ${props => props.$viewState === 'HEIGHT_70' && `
-        position: fixed;
+        position: absolute;
         bottom: 0;
         left: 0;
         width: 100%;
-        height: 70vh;
+        height: 70%;
         display: flex;
         flex-direction: column;
         border-top: 2px solid var(--terminal-green);
@@ -161,7 +161,7 @@ const TerminalWrapper = styled.div<{ $isExpanded: boolean }>`
       word-break: break-word !important;
       max-width: 100% !important;
       box-sizing: border-box !important;
-      height: auto !important;
+      /* height: auto !important;  <-- REMOVED TO FIX SCROLLING */
       display: block !important;
   }
   
@@ -216,7 +216,7 @@ const TerminalController: React.FC = () => {
         overflow-wrap: break-word !important;
         word-wrap: break-word !important;
         word-break: break-word !important;
-        height: auto !important;
+        /* height: auto !important; <-- REMOVED TO FIX SCROLLING */
         display: block !important;
         max-width: 100% !important;
       }

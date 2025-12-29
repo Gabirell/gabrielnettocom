@@ -13,6 +13,8 @@ const OuterContainer = styled.div`
   margin: 0 auto;
   background-color: var(--terminal-bg);
   box-shadow: 0 0 20px var(--terminal-green);
+  position: relative; /* Trap absolute children (Terminal) inside */
+  overflow: hidden; /* Prevent spillover */
 
   @media (max-width: 768px) {
     width: 100%;
