@@ -208,10 +208,9 @@ const Layout = () => {
       <TerminalController />
       {/* Persistent Footer */}
       <FooterLinks>
-        <span>CONTACTS:</span>
-        <Link href="mailto:gabriel@example.com">Email</Link>
+        <Link href="mailto:gabriel.netto@gmail.com">Email</Link>
         <Link href="https://github.com/Gabirell" target="_blank">GitHub</Link>
-        <Link href="https://linkedin.com" target="_blank">LinkedIn</Link>
+        <Link href="https://www.linkedin.com/in/gabrielnetto/" target="_blank">LinkedIn</Link>
       </FooterLinks>
     </OuterContainer>
   );
