@@ -187,7 +187,7 @@ const MinimizedBoxContent = styled.div`
 
 const MinimizedDot = styled.div`
     position: absolute;
-    bottom: 12px;
+    bottom: 4px; /* Aligned with footer text baseline */
     left: 20px;
     width: 15px;
     height: 15px;
