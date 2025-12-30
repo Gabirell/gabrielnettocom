@@ -150,6 +150,25 @@ const Layout = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Translate Logic
+  const [translateText, setTranslateText] = useState('Translate');
+  const [targetLang, setTargetLang] = useState('en');
+
+  useEffect(() => {
+    const lang = navigator.language || 'en';
+    setTargetLang(lang);
+    if (lang.startsWith('pt')) setTranslateText('Traduzir');
+    else if (lang.startsWith('es')) setTranslateText('Traducir');
+    else if (lang.startsWith('fr')) setTranslateText('Traduire');
+    else if (lang.startsWith('de')) setTranslateText('Übersetzen');
+    else if (lang.startsWith('it')) setTranslateText('Tradurre');
+    else setTranslateText('Translate');
+  }, []);
+
+  const handleTranslate = () => {
+    window.open(`https://translate.google.com/translate?sl=auto&tl=${targetLang}&u=${encodeURIComponent(window.location.href)}`, '_blank');
+  };
+
   // Keyboard Navigation Logic
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -186,10 +205,20 @@ const Layout = () => {
     <OuterContainer>
       <HeaderBar>
         <HeaderLeft>{dateTime}</HeaderLeft>
-        {/* Admin Link in Header */}
-        <NavLink to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <HeaderRight>/GABRIELNETTO % (ADMIN)</HeaderRight>
-        </NavLink>
+        <div style={{ display: 'flex', gap: '20px' }}>
+          {/* Admin Link */}
+          <NavLink to="/admin" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <HeaderRight>/GABRIELNETTO % (ADMIN)</HeaderRight>
+          </NavLink>
+          {/* Translate Button */}
+          <div
+            onClick={handleTranslate}
+            style={{ cursor: 'pointer', color: '#ff5f56', textTransform: 'uppercase', fontWeight: 'bold' }}
+            title="Translate this page"
+          >
+            {translateText}
+          </div>
+        </div>
       </HeaderBar>
       <MenuBar>
         {MENU_ITEMS.map((item, index) => (

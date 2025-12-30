@@ -185,19 +185,27 @@ const MinimizedBoxContent = styled.div`
     cursor: pointer;
 `;
 
-const DotButton = styled.div`
-    width: 20px;
-    height: 20px;
-    background-color: var(--terminal-green);
+const MinimizedDot = styled.div`
+    position: absolute;
+    bottom: 12px;
+    left: 20px;
+    width: 15px;
+    height: 15px;
+    background-color: #ff0000; /* RED */
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 5px var(--terminal-green);
+    box-shadow: 0 0 10px #ff0000;
     animation: pulse 2s infinite;
+    z-index: 300;
 
     @keyframes pulse {
         0% { transform: scale(1); opacity: 0.8; }
         50% { transform: scale(1.2); opacity: 1; }
         100% { transform: scale(1); opacity: 0.8; }
+    }
+    
+    &:hover {
+      background-color: #ff3333;
     }
 `;
 
@@ -219,6 +227,15 @@ const TerminalController: React.FC = () => {
         /* height: auto !important; <-- REMOVED TO FIX SCROLLING */
         display: block !important;
         max-width: 100% !important;
+      }
+      /* Force Prompt and Input to be inline */
+      .react-terminal-line {
+         display: flex !important;
+         align-items: center !important;
+      }
+      .react-terminal-active-input {
+         margin-left: 8px !important; /* Space after $ */
+         display: inline-block !important;
       }
     `;
     document.head.appendChild(style);
@@ -344,7 +361,7 @@ const TerminalController: React.FC = () => {
       )}
 
       {viewState === 'MINIMIZED_DOT' && (
-        <DotButton onClick={toMaximized} title="Open Terminal" />
+        <MinimizedDot onClick={toMaximized} title="Open Terminal" />
       )}
     </Container>
   );
