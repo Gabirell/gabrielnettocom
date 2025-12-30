@@ -234,7 +234,6 @@ const TerminalController: React.FC = () => {
   const toMaximized = () => setViewState('MAXIMIZED');
   const toExpanded = () => setViewState(prev => prev === 'EXPANDED' ? 'HEIGHT_70' : 'EXPANDED'); // Green button logic
   const toHeight70 = () => setViewState(prev => prev === 'HEIGHT_70' ? 'MAXIMIZED' : 'HEIGHT_70'); // Yellow button logic (Toggle 70% <-> Initial)
-  const toMinBox = () => setViewState('MINIMIZED_BOX');
   const toMinDot = () => setViewState('MINIMIZED_DOT');
 
   const handleInput = async (terminalInput: string) => {
