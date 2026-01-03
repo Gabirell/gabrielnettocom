@@ -18,6 +18,7 @@ const Placeholder = ({ title }: { title: string }) => (
 );
 
 const App = () => {
+  console.log("%c VERSION: 2025-12-30-TRANSLATE-FIX-YELLOW ", "background: #222; color: #bada55; font-size: 20px");
   const [isBooted, setIsBooted] = useState(false);
 
   useEffect(() => {

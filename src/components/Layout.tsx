@@ -212,11 +212,12 @@ const Layout = () => {
           </NavLink>
           {/* Translate Button */}
           <div
+            id="translate-btn"
             onClick={handleTranslate}
-            style={{ cursor: 'pointer', color: '#ff5f56', textTransform: 'uppercase', fontWeight: 'bold' }}
+            style={{ cursor: 'pointer', color: '#FFD700', textTransform: 'uppercase', fontWeight: 'bold' }}
             title="Translate this page"
           >
-            {translateText}
+            [ {translateText} ]
           </div>
         </div>
       </HeaderBar>
