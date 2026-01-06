@@ -297,11 +297,9 @@ const TerminalController: React.FC = () => {
 
     try {
       // Send to n8n Webhook via Nginx Proxy (No CORS constraints)
-      // Production: direct call to n8n subdomain
-      // Development: local proxy via Vite
-      const API_URL = import.meta.env.PROD
-        ? 'https://n8n.gabrielnetto.com/webhook/chat'
-        : '/api/chat';
+      // Use relative path for both Development and Production
+      // Nginx (remote: /api/chat -> 127.0.0.1:5678) and Vite (local) will handle the proxying
+      const API_URL = '/api/chat';
 
       const response = await fetch(API_URL, {
         method: 'POST',
