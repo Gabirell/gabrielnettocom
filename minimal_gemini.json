@@ -1,0 +1,112 @@
+{
+    "active": true,
+    "name": "Minimal Gemini Test",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "chat",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-node",
+            "name": "Terminal Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                460,
+                340
+            ],
+            "webhookId": "terminal-chat"
+        },
+        {
+            "parameters": {
+                "modelName": "models/gemini-pro",
+                "options": {
+                    "temperature": 0.5
+                }
+            },
+            "id": "gemini-model",
+            "name": "Google Gemini Chat Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                700,
+                540
+            ],
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "AYzgONYCKW8OQ0Qh",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.message || 'Hello' }}",
+                "options": {
+                    "systemMessage": "You are a helpful assistant."
+                }
+            },
+            "id": "ai-chain",
+            "name": "AI Chain",
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1,
+            "position": [
+                700,
+                340
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ JSON.stringify($json) }}",
+                "options": {}
+            },
+            "id": "respond-webhook",
+            "name": "Respond to Terminal",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1000,
+                340
+            ]
+        }
+    ],
+    "connections": {
+        "Terminal Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "AI Chain",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Gemini Chat Model": {
+            "ai_language_model": [
+                [
+                    {
+                        "node": "AI Chain",
+                        "type": "ai_language_model",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Chain": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Terminal",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

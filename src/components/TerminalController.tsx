@@ -297,7 +297,13 @@ const TerminalController: React.FC = () => {
 
     try {
       // Send to n8n Webhook via Nginx Proxy (No CORS constraints)
-      const response = await fetch('/api/chat', {
+      // Production: direct call to n8n subdomain
+      // Development: local proxy via Vite
+      const API_URL = import.meta.env.PROD
+        ? 'https://n8n.gabrielnetto.com/webhook/chat'
+        : '/api/chat';
+
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: terminalInput })
