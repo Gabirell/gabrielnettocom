@@ -8,40 +8,42 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Projects from './pages/Projects';
 import Admin from './pages/Admin';
+import Blog from './pages/Blog';
+import Games from './pages/Games';
 
 // Placeholder Pages
 const Placeholder = ({ title }: { title: string }) => (
-  <div style={{ padding: '20px', fontFamily: "'VT323', monospace", fontSize: '24px' }}>
-    <h1>{title}</h1>
+  <div style={{ padding: '20px', fontFamily: "'VT323', monospace", fontSize: '24px', color: 'var(--terminal-green)' }}>
+    <h1 style={{ color: '#fff', marginBottom: '20px' }}>{title}</h1>
     <p>This module is currently under construction...</p>
+    <p style={{ marginTop: '10px', opacity: 0.7 }}>Check back soon!</p>
   </div>
 );
 
 const App = () => {
-  console.log("%c VERSION: 2025-12-30-TRANSLATE-FIX-YELLOW ", "background: #222; color: #bada55; font-size: 20px");
   const [isBooted, setIsBooted] = useState(false);
 
+  // Skip boot sequence in dev (comment out for production)
   useEffect(() => {
-    console.log('%c [DEBUG] App Mounted. isBooted:', 'color: magenta', isBooted);
+    const skipBoot = import.meta.env.DEV;
+    if (skipBoot) setIsBooted(true);
   }, []);
 
-  console.log('%c [DEBUG] App Render. isBooted:', 'color: magenta', isBooted);
+  console.log('🎮 App v1.0.2 - gabrielnetto.com');
 
   return (
     <CRTContainer>
       {!isBooted ? (
-        <BootSequence onComplete={() => {
-          console.log('%c [DEBUG] Boot Complete Triggered', 'color: magenta');
-          setIsBooted(true);
-        }} />
+        <BootSequence onComplete={() => setIsBooted(true)} />
       ) : (
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="about" element={<About />} />
             <Route path="apps" element={<Placeholder title="Applications" />} />
-            <Route path="games" element={<Placeholder title="Games" />} />
+            <Route path="games" element={<Games />} />
             <Route path="arts" element={<Placeholder title="Arts" />} />
+            <Route path="blog" element={<Blog />} />
             <Route path="projects" element={<Projects />} />
             <Route path="admin" element={<Admin />} />
           </Route>

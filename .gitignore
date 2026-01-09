@@ -1,24 +1,54 @@
-# Logs
-logs
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+.tmp/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# Editor directories
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Google OAuth credentials (if stored locally)
+credentials.json
+token.json
+
+# n8n local data (if running locally)
+.n8n/
+
+# Old/deprecated files (keep originals until verified)
+# Uncomment these after verification phase
+# DNS_SAFETY_GUIDE.md
+# DEPLOYMENT.md
+# EMAIL_VERIFICATION_STATUS.md
+# TOMORROW_START_HERE.md
+# SIMPLE_UPTIME_MONITOR_SETUP.md
+# UPTIME_MONITOR_SETUP_GUIDE.md
+# GOOGLE_SHEETS_SETUP_GUIDE.md
+# QUICK_REFERENCE.md
+# deploy-frontend.sh
+# check-domain.sh
+# list_creds.js
+# import_script.js
+# n8n_*.json
+# blueprint.md
+# echo_workflow.json
+# minimal_gemini.json
+# test_debug.json

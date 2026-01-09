@@ -1,0 +1,480 @@
+{
+    "name": "gabrielnetto.com Uptime Monitor v3 (Google Sheets)",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "minutes",
+                            "minutesInterval": 5
+                        }
+                    ]
+                }
+            },
+            "id": "cron-trigger",
+            "name": "Check Every 5 Minutes",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                240,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://gabrielnetto.com",
+                "options": {
+                    "timeout": 10000,
+                    "redirect": {
+                        "redirect": {
+                            "followRedirects": true,
+                            "maxRedirects": 5
+                        }
+                    }
+                }
+            },
+            "id": "check-website",
+            "name": "Check Website",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                460,
+                300
+            ],
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "operation": "read",
+                "documentId": {
+                    "__rl": true,
+                    "value": "YOUR_SHEET_ID_HERE",
+                    "mode": "id"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "Sheet1",
+                    "mode": "name"
+                },
+                "range": "B2:D2",
+                "options": {}
+            },
+            "id": "read-previous-status",
+            "name": "Google Sheets: Read Previous Status",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4.4,
+            "position": [
+                680,
+                300
+            ],
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "google-sheets-api",
+                    "name": "Google Sheets - Uptime Monitor"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// Get current status from HTTP request\nconst currentStatusCode = $('Check Website').item.json.statusCode;\nconst currentStatus = currentStatusCode === 200 ? 'online' : 'offline';\n\n// Get previous status from Google Sheets\nconst sheetsData = $('Google Sheets: Read Previous Status').first().json;\nconst previousStatus = sheetsData.status || 'online';\n\n// Determine if state changed\nconst stateChanged = currentStatus !== previousStatus;\n\n// Return data for routing and updating the sheet\nreturn [{\n  json: {\n    currentStatus,\n    previousStatus,\n    stateChanged,\n    statusCode: currentStatusCode || 0,\n    error: $('Check Website').item.json.error?.message || '',\n    timestamp: new Date().toISOString()\n  }\n}];"
+            },
+            "id": "track-state",
+            "name": "Track State Changes",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                900,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "update",
+                "documentId": {
+                    "__rl": true,
+                    "value": "YOUR_SHEET_ID_HERE",
+                    "mode": "id"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "Sheet1",
+                    "mode": "name"
+                },
+                "range": "A2:D2",
+                "options": {
+                    "valueInputMode": "USER_ENTERED"
+                },
+                "dataMode": "defineBelow",
+                "fieldsUi": {
+                    "values": [
+                        {
+                            "column": "A",
+                            "fieldValue": "={{ $json.timestamp }}"
+                        },
+                        {
+                            "column": "B",
+                            "fieldValue": "={{ $json.currentStatus }}"
+                        },
+                        {
+                            "column": "C",
+                            "fieldValue": "={{ $json.statusCode }}"
+                        },
+                        {
+                            "column": "D",
+                            "fieldValue": "={{ $json.error }}"
+                        }
+                    ]
+                }
+            },
+            "id": "update-status",
+            "name": "Google Sheets: Update Status",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4.4,
+            "position": [
+                1120,
+                300
+            ],
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "google-sheets-api",
+                    "name": "Google Sheets - Uptime Monitor"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "id": "state-changed-to-down",
+                            "leftValue": "={{ $json.currentStatus }}",
+                            "rightValue": "offline",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        },
+                        {
+                            "id": "state-actually-changed",
+                            "leftValue": "={{ $json.stateChanged }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "check-down",
+            "name": "Did State Change to DOWN?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                1340,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "id": "state-changed-to-up",
+                            "leftValue": "={{ $json.currentStatus }}",
+                            "rightValue": "online",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        },
+                        {
+                            "id": "state-actually-changed",
+                            "leftValue": "={{ $json.stateChanged }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "check-up",
+            "name": "Did State Change to UP?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                1340,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "content": "🚨 *ALERT: Site is DOWN!* 🚨\n\n*Website:* gabrielnetto.com\n*Status:* {{ $('Track State Changes').item.json.statusCode || 'No Response' }}\n*Time:* {{ $now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }) }}\n*Error:* {{ $('Track State Changes').item.json.error || 'Connection failed' }}\n\n_Monitoring will continue every 5 minutes._\n_You will only receive another alert when the status changes._",
+                "additionalFields": {
+                    "appendAttribution": false
+                },
+                "options": {
+                    "contentType": "markdown"
+                }
+            },
+            "id": "format-alert",
+            "name": "Format Alert Message",
+            "type": "n8n-nodes-base.markdown",
+            "typeVersion": 1,
+            "position": [
+                1560,
+                100
+            ]
+        },
+        {
+            "parameters": {
+                "content": "✅ *Site is BACK ONLINE!* ✅\n\n*Website:* gabrielnetto.com\n*Status:* {{ $('Track State Changes').item.json.statusCode }}\n*Time:* {{ $now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }) }}\n*Downtime ended:* Previous status was {{ $('Track State Changes').item.json.previousStatus }}\n\n_Site is responding normally._",
+                "additionalFields": {
+                    "appendAttribution": false
+                },
+                "options": {
+                    "contentType": "markdown"
+                }
+            },
+            "id": "format-recovery",
+            "name": "Format Recovery Message",
+            "type": "n8n-nodes-base.markdown",
+            "typeVersion": 1,
+            "position": [
+                1560,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "fromEmail": "gabriel.netto@gmail.com",
+                "toEmail": "gabriel.netto@gmail.com",
+                "subject": "🚨 Alert: gabrielnetto.com is DOWN",
+                "text": "={{ $('Format Alert Message').item.json.html }}",
+                "options": {}
+            },
+            "id": "send-email-down",
+            "name": "Email: Site Down",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2.1,
+            "position": [
+                1780,
+                20
+            ],
+            "credentials": {
+                "smtp": {
+                    "id": "gmail-smtp",
+                    "name": "Gmail SMTP"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "fromEmail": "gabriel.netto@gmail.com",
+                "toEmail": "gabriel.netto@gmail.com",
+                "subject": "✅ Recovery: gabrielnetto.com is BACK ONLINE",
+                "text": "={{ $('Format Recovery Message').item.json.html }}",
+                "options": {}
+            },
+            "id": "send-email-up",
+            "name": "Email: Site Recovered",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2.1,
+            "position": [
+                1780,
+                320
+            ],
+            "credentials": {
+                "smtp": {
+                    "id": "gmail-smtp",
+                    "name": "Gmail SMTP"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "chatId": "5269208269",
+                "text": "={{ $('Format Alert Message').item.json.html }}",
+                "additionalFields": {
+                    "parse_mode": "Markdown"
+                }
+            },
+            "id": "send-telegram-down",
+            "name": "Telegram: Site Down",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                1780,
+                100
+            ],
+            "credentials": {
+                "telegramApi": {
+                    "id": "telegram-bot",
+                    "name": "Telegram Bot"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "chatId": "5269208269",
+                "text": "={{ $('Format Recovery Message').item.json.html }}",
+                "additionalFields": {
+                    "parse_mode": "Markdown"
+                }
+            },
+            "id": "send-telegram-up",
+            "name": "Telegram: Site Recovered",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                1780,
+                400
+            ],
+            "credentials": {
+                "telegramApi": {
+                    "id": "telegram-bot",
+                    "name": "Telegram Bot"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Check Every 5 Minutes": {
+            "main": [
+                [
+                    {
+                        "node": "Check Website",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check Website": {
+            "main": [
+                [
+                    {
+                        "node": "Google Sheets: Read Previous Status",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Sheets: Read Previous Status": {
+            "main": [
+                [
+                    {
+                        "node": "Track State Changes",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Track State Changes": {
+            "main": [
+                [
+                    {
+                        "node": "Google Sheets: Update Status",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Sheets: Update Status": {
+            "main": [
+                [
+                    {
+                        "node": "Did State Change to DOWN?",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Did State Change to UP?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Did State Change to DOWN?": {
+            "main": [
+                [
+                    {
+                        "node": "Format Alert Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Did State Change to UP?": {
+            "main": [
+                [
+                    {
+                        "node": "Format Recovery Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Alert Message": {
+            "main": [
+                [
+                    {
+                        "node": "Email: Site Down",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Telegram: Site Down",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Recovery Message": {
+            "main": [
+                [
+                    {
+                        "node": "Email: Site Recovered",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Telegram: Site Recovered",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "auto-generated",
+    "tags": []
+}

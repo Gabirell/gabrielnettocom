@@ -1,0 +1,44 @@
+{
+    "name": "Debug ResponseMode",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "chat",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-test",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [460, 340],
+            "webhookId": "debug-chat"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "{\"output\": \"WORKING\"}",
+                "options": {}
+            },
+            "id": "respond-test",
+            "name": "Respond",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [700, 340]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Respond",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

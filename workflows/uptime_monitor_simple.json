@@ -1,0 +1,290 @@
+{
+    "name": "gabrielnetto.com Uptime Monitor",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "minutes",
+                            "minutesInterval": 5
+                        }
+                    ]
+                }
+            },
+            "id": "cron-trigger",
+            "name": "Check Every 5 Minutes",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                240,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://gabrielnetto.com",
+                "options": {
+                    "timeout": 10000,
+                    "redirect": {
+                        "redirect": {
+                            "followRedirects": true,
+                            "maxRedirects": 5
+                        }
+                    }
+                }
+            },
+            "id": "check-website",
+            "name": "Check Website",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                460,
+                300
+            ],
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "id": "site-is-down",
+                            "leftValue": "={{ $json.statusCode }}",
+                            "rightValue": 200,
+                            "operator": {
+                                "type": "number",
+                                "operation": "notEquals"
+                            }
+                        }
+                    ],
+                    "combinator": "or"
+                },
+                "options": {}
+            },
+            "id": "check-status",
+            "name": "Is Site Down?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                680,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "content": "🚨 *ALERT: Site is DOWN!* 🚨\\n\\n*Website:* gabrielnetto.com\\n*Status:* {{ $('Check Website').item.json.statusCode || 'No Response' }}\\n*Time:* {{ $now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }) }}\\n*Error:* {{ $('Check Website').item.json.error?.message || 'Connection failed' }}\\n\\n_Monitoring will continue every 5 minutes._",
+                "additionalFields": {
+                    "appendAttribution": false
+                },
+                "options": {
+                    "contentType": "markdown"
+                }
+            },
+            "id": "format-alert",
+            "name": "Format Alert Message",
+            "type": "n8n-nodes-base.markdown",
+            "typeVersion": 1,
+            "position": [
+                900,
+                180
+            ]
+        },
+        {
+            "parameters": {
+                "content": "✅ *Site is BACK ONLINE!* ✅\\n\\n*Website:* gabrielnetto.com\\n*Status:* {{ $('Check Website').item.json.statusCode }}\\n*Time:* {{ $now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }) }}\\n\\n_Site is responding normally._",
+                "additionalFields": {
+                    "appendAttribution": false
+                },
+                "options": {
+                    "contentType": "markdown"
+                }
+            },
+            "id": "format-recovery",
+            "name": "Format Recovery Message",
+            "type": "n8n-nodes-base.markdown",
+            "typeVersion": 1,
+            "position": [
+                900,
+                420
+            ]
+        },
+        {
+            "parameters": {
+                "fromEmail": "gabriel.netto@gmail.com",
+                "toEmail": "gabriel.netto@gmail.com",
+                "subject": "🚨 Alert: gabrielnetto.com is DOWN",
+                "text": "={{ $('Format Alert Message').item.json.html }}",
+                "options": {}
+            },
+            "id": "send-email-down",
+            "name": "Email: Site Down",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2.1,
+            "position": [
+                1120,
+                100
+            ],
+            "credentials": {
+                "smtp": {
+                    "id": "gmail-smtp",
+                    "name": "Gmail SMTP"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "fromEmail": "gabriel.netto@gmail.com",
+                "toEmail": "gabriel.netto@gmail.com",
+                "subject": "✅ Recovery: gabrielnetto.com is BACK ONLINE",
+                "text": "={{ $('Format Recovery Message').item.json.html }}",
+                "options": {}
+            },
+            "id": "send-email-up",
+            "name": "Email: Site Recovered",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 2.1,
+            "position": [
+                1120,
+                340
+            ],
+            "credentials": {
+                "smtp": {
+                    "id": "gmail-smtp",
+                    "name": "Gmail SMTP"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "chatId": "5269208269",
+                "text": "={{ $('Format Alert Message').item.json.html }}",
+                "additionalFields": {
+                    "parse_mode": "Markdown"
+                }
+            },
+            "id": "send-telegram-down",
+            "name": "Telegram: Site Down",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                1120,
+                180
+            ],
+            "credentials": {
+                "telegramApi": {
+                    "id": "telegram-bot",
+                    "name": "Telegram Bot"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "chatId": "5269208269",
+                "text": "={{ $('Format Recovery Message').item.json.html }}",
+                "additionalFields": {
+                    "parse_mode": "Markdown"
+                }
+            },
+            "id": "send-telegram-up",
+            "name": "Telegram: Site Recovered",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                1120,
+                420
+            ],
+            "credentials": {
+                "telegramApi": {
+                    "id": "telegram-bot",
+                    "name": "Telegram Bot"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Check Every 5 Minutes": {
+            "main": [
+                [
+                    {
+                        "node": "Check Website",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check Website": {
+            "main": [
+                [
+                    {
+                        "node": "Is Site Down?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Is Site Down?": {
+            "main": [
+                [
+                    {
+                        "node": "Format Alert Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Format Recovery Message",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Alert Message": {
+            "main": [
+                [
+                    {
+                        "node": "Email: Site Down",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Telegram: Site Down",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Recovery Message": {
+            "main": [
+                [
+                    {
+                        "node": "Email: Site Recovered",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Telegram: Site Recovered",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "auto-generated",
+    "tags": []
+}

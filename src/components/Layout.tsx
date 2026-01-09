@@ -125,7 +125,8 @@ const MENU_ITEMS = [
   { label: 'Apps', path: '/apps' },
   { label: 'Games', path: '/games' },
   { label: 'Arts', path: '/arts' },
-  { label: 'About', path: '/about' }
+  { label: 'About', path: '/about' },
+  { label: 'Blog', path: '/blog' }
 ];
 
 const Layout = () => {

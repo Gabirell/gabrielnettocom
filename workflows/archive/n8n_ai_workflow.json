@@ -1,0 +1,247 @@
+{
+  "name": "Terminal AI Chat (Groq + Gemini Fallback)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Terminal Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        460,
+        340
+      ],
+      "webhookId": "terminal-chat"
+    },
+    {
+      "parameters": {
+        "model": "llama3-70b-8192",
+        "options": {
+          "temperature": 0.5,
+          "systemMessage": "={{ $('Context').item.json.system_prompt }}"
+        }
+      },
+      "id": "groq-model",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        900,
+        540
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "YOUR_GROQ_CREDENTIAL_ID",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-pro",
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "id": "gemini-model",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        540
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_GEMINI_CREDENTIAL_ID",
+          "name": "Google Gemini account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant living inside a retro terminal website (gabrielnetto.com). Your responses should be concise, technical, and fit the retro aesthetic. Use <br> for new lines.\n\nUSER CONTEXT:\n{{ $('Context').item.json.resume_context }}"
+        }
+      },
+      "id": "ai-agent-groq",
+      "name": "AI Agent (Groq)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1,
+      "position": [
+        900,
+        340
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Terminal Webhook').item.json.message }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant living inside a retro terminal website (gabrielnetto.com). Your responses should be concise, technical, and fit the retro aesthetic. Use <br> for new lines.\n\nUSER CONTEXT:\n{{ $('Context').item.json.resume_context }}"
+        }
+      },
+      "id": "ai-agent-gemini",
+      "name": "AI Agent (Gemini Fallback)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "resume_context",
+              "value": "My name is Gabriel Netto.\\nI am a Full Stack Developer.\\nI love Three.js, React, and AI.\\n(PASTE YOUR FULL RESUME CONTENT HERE IN N8N)"
+            },
+            {
+              "name": "system_prompt",
+              "value": "You are a terminal assistant."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "context-node",
+      "name": "Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        680,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.text && $json.text.length > 0 }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-success",
+      "name": "Did Groq Work?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"output\": \"{{ $json.text }}\"\n}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Terminal",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        340
+      ]
+    }
+  ],
+  "connections": {
+    "Terminal Webhook": {
+      "main": [
+        [
+          {
+            "node": "Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Context": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (Groq)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_language_model": [
+        [
+          {
+            "node": "AI Agent (Groq)",
+            "type": "ai_language_model",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_language_model": [
+        [
+          {
+            "node": "AI Agent (Gemini Fallback)",
+            "type": "ai_language_model",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent (Groq)": {
+      "main": [
+        [
+          {
+            "node": "Did Groq Work?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Did Groq Work?": {
+      "main": [
+        [
+          {
+            "node": "Respond to Terminal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent (Gemini Fallback)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent (Gemini Fallback)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Terminal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
